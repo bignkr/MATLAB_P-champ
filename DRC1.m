@@ -15,7 +15,7 @@ ism = imfilter(iaj, avg, 'replicate');
 figure(3),imshow(ism),title('Smoothed')
 
 ism_inv = imadjust(ism, [0 1], [1 0]);
-
-i_DRC = iaj + ism;
+% when multiply by constant value the image will darker
+i_DRC = iaj + ism*0.01;
 
 figure(4),imshow(i_DRC),title('DRC Postprocessing')
