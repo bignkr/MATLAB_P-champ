@@ -1,0 +1,54 @@
+clc, clear all, close all
+%% Display to User input
+disp('MATLAB DRC post processing');
+disp('Please enter the number of the following setting');
+img = input('1.DICOM or 2.normal image (type: 1 or 2):');
+met = input('Filter? 1.Average 2.Gaussian (type: 1 or 2):') ;
+if met == 2
+    g = input('Unsharp level(SD of gaussian filter):');
+    f = input('Filter size?(odd number only): ');
+else
+    f = input('Filter size?(odd number only): ');
+end
+% c = input('Input some value constants (suggest 0.01):');% when multiply by constant value the image will getting darker
+mode = input('Display in 1. multiwindows or 2. subplot? (type: 1 or 2): ');
+%% Image reading
+if img == 1
+    %Find DICOM file
+    [file, path] = uigetfile({'*.*'},'Select DICOM file');
+    filename = strcat(path,file);
+	I = dicomread(filename);
+	info = dicominfo(filename);
+    %Making DICOM file visible
+	I = im2double(I);
+	img_max = max(max(I)); img_min = min(min(I));
+	Iaj = imadjust(I, [img_min img_max], [1 0]);
+else
+	[file, path] = uigetfile({'*.*'},'Select file');
+	filename = strcat(path,file);
+	Iaj = imread(filename);
+end
+%% DRC adjustment
+if met == 2
+    Ius = imgaussfilt(Iaj,g,'FilterSize',f);%Unshaped Image
+else
+    h = fspecial('average',f); % filter which can be adjusted
+    Ius = imfilter(Iaj,h,'replicate'); %blur filtering
+end
+% Ius_inv = imadjust(Ius, [0 1], [1 0]);
+Ius_inv = 1 - Ius ;
+% Ius_inv = Ius_inv*c; %For getting darker image
+Idrc = Iaj + Ius_inv;
+%% Output display
+if mode == 1
+    figure(1),imshow(Iaj),axis tight,title('Orginal image')
+    figure(2),imshow(Ius),axis tight,title('Smoothed image')
+    figure(3),imshow(Ius_inv),axis tight,title('Conversion image')
+    figure(4),imshow(Idrc),axis tight,title('DRC image')
+else
+    figure(1),
+    subplot(141),imshow(Iaj),axis tight,title('Orginal image')
+    subplot(142),imshow(Ius),axis tight,title('Smoothed image')
+    subplot(143),imshow(Ius_inv),axis tight,title('Conversion image')
+ 	subplot(144),imshow(Idrc),axis tight,title('DRC image')
+end
